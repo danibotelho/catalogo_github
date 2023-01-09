@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, useState } from 'react';
+import React, { ChangeEvent, FormEvent, useState, useEffect } from 'react';
 import { Title, Form, Repos, Error } from './styles';
 import logo from '../../assets/logo.svg';
 import { FiChevronRight } from 'react-icons/fi';
@@ -14,9 +14,19 @@ interface GithubRepository {
 }
 
 export const Dashboard = () => {
-  const [repos, setRepos] = useState<GithubRepository[]>([]);
+  const [repos, setRepos] = useState<GithubRepository[]>(() => {
+    const storageRepos = localStorage.getItem('@GitCollection:repositories');
+    if (storageRepos) {
+      return JSON.parse(storageRepos);
+    }
+    return [];
+  });
   const [newRepo, setNewRepo] = useState('');
   const [inputError, setInputError] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('@GitCollection:repositories', JSON.stringify(repos));
+  }, [repos]);
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
     setNewRepo(event.target.value);
