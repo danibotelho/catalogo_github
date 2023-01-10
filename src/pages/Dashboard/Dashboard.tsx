@@ -1,4 +1,10 @@
-import React, { ChangeEvent, FormEvent, useState, useEffect } from 'react';
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useState,
+  useEffect,
+  useRef,
+} from 'react';
 import { Title, Form, Repos, Error } from './styles';
 import logo from '../../assets/logo.svg';
 import { FiChevronRight } from 'react-icons/fi';
@@ -14,7 +20,12 @@ interface GithubRepository {
   };
 }
 
-export const Dashboard = () => {
+const Dashboard = () => {
+  const [newRepo, setNewRepo] = useState('');
+  const [inputError, setInputError] = useState('');
+
+  const formEl = useRef<HTMLFormElement | null>(null);
+
   const [repos, setRepos] = useState<GithubRepository[]>(() => {
     const storageRepos = localStorage.getItem('@GitCollection:repositories');
     if (storageRepos) {
@@ -22,8 +33,6 @@ export const Dashboard = () => {
     }
     return [];
   });
-  const [newRepo, setNewRepo] = useState('');
-  const [inputError, setInputError] = useState('');
 
   useEffect(() => {
     localStorage.setItem('@GitCollection:repositories', JSON.stringify(repos));
@@ -41,19 +50,28 @@ export const Dashboard = () => {
     if (!newRepo) {
       setInputError('Informe o username/repositório');
     }
+    try {
+      const response = await api.get<GithubRepository>(`repos/${newRepo}`);
 
-    const response = await api.get<GithubRepository>(`repos/${newRepo}`);
-    const repository = response.data;
-    setRepos([...repos, repository]);
-
-    setNewRepo('');
+      const repository = response.data;
+      setRepos([...repos, repository]);
+      formEl.current?.reset();
+      setNewRepo('');
+      setInputError('');
+    } catch {
+      setInputError('Repositório não encontrado no Github');
+    }
   }
   return (
     <>
       <img src={logo} alt="gitCollection" />
       <Title>Catálogo de repositórios do Github</Title>
 
-      <Form onSubmit={handleAddRepo} hasErros={Boolean(inputError)}>
+      <Form
+        ref={formEl}
+        onSubmit={handleAddRepo}
+        hasErros={Boolean(inputError)}
+      >
         <input
           placeholder="username/repository_name"
           onChange={handleInputChange}
@@ -64,10 +82,10 @@ export const Dashboard = () => {
       {inputError && <Error>{inputError}</Error>}
 
       <Repos>
-        {repos.map(repository => (
+        {repos.map((repository, index) => (
           <Link
             to={`/repositories/${repository.full_name}`}
-            key={repository.full_name}
+            key={repository.full_name + index}
           >
             <img
               src={repository.owner.avatar_url}
@@ -84,3 +102,5 @@ export const Dashboard = () => {
     </>
   );
 };
+
+export default Dashboard;
