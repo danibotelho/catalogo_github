@@ -7,7 +7,7 @@ export const Routes = () => {
   return (
     <Switch>
       <Route component={Dashboard} path="/" exact />
-      <Route component={Repository} path="/repositories" />
+      <Route component={Repository} path="/repositories/:repository+" />
     </Switch>
   );
 };
